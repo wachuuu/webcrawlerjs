@@ -21,7 +21,7 @@ const headers = {
 	};
 
 (async () => { 
-	const { data } = await axios.get('https://www.morele.net/', { headers: headers }); 
+	const { data } = await axios.get('https://www.morele.net/', { proxy }, { headers: headers }); 
  
 	console.log(data); 
 })(); 

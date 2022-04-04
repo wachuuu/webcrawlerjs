@@ -5,12 +5,12 @@ const fs = require('fs');
 const base = 'https://www.morele.net';
 const url = base + '/kategoria/klocki-lego-1045/'
 
-const maxVisits = 2; // maximum of links visited 
+const maxVisits = 40; // maximum of links visited 
 const visited = new Set();
 const allProducts = [];
 let q;
 
-const queue = (concurrency = 3) => {
+const queue = (concurrency = 5) => {
   let running = 0;
   const tasks = [];
 
@@ -40,13 +40,13 @@ const extractContent = $ =>
   $('.cat-product-content')
     .map((_, product) => {
       const $product = $(product);
-      const $price = $product.find('.cat-product-price .price-new').text().match(/\d+,?\d*/)
+      const $price = $product.find('.cat-product-price .price-new').text().match(/\d+( ?\d*)*,?\d*/)
       const $pieces = $product.find('.cat-product-feature:contains("Liczba elementów:")').text().match(/\d+/)
       return {
         title: $product.find('.cat-product-name a').attr('title'),
-        price: $price ? parseFloat($price[0].replace(/,/g, '.')) : undefined,
+        price: $price ? parseFloat($price[0].replaceAll(/ /g, '').replace(/,/g, '.')) : undefined,
         pieces: $pieces ? parseInt($pieces[0]) : undefined,
-        pricePerPiece: ($price && $pieces) ? parseFloat($price[0].replace(/,/g, '.'))/parseInt($pieces[0]) : undefined
+        pricePerPiece: ($price && $pieces) ? parseFloat($price[0].replaceAll(/ /g, '').replace(/,/g, '.'))/parseInt($pieces[0]) : undefined
       };
     })
     .toArray();
@@ -88,13 +88,13 @@ const crawlTask = async url => {
   await crawl(url);
 };
 
-const finish = () => {
-  fs.writeFileSync('products.json', JSON.stringify(allProducts.sort((a, b) => a.pricePerPiece - b.pricePerPiece), null, 4))
-}
-
 const start = () => { 
   q = queue();
   q.enqueue(crawlTask, url);
+}
+
+const finish = () => {
+  fs.writeFileSync('products.json', JSON.stringify(allProducts.sort((a, b) => a.pricePerPiece - b.pricePerPiece), null, 4))
 }
 
 start()
